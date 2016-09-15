@@ -1,0 +1,85 @@
+<project name="HelloWorld" basedir="." default="main">
+
+    <property name="src.dir"     value="src"/>
+
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+
+    <property name="checkstyle.home.dir" location="/install/checkstyle"/>
+    <property name="pmd.home.dir" value="/install/pmd-bin-5.5.1"/>
+    <property name="report.dir" location="${build.dir}/report" />
+    <property name="report.checkstyle.dir" location="${report.dir}/checkstyle" />
+    <property name="report.pmd.dir" location="${report.dir}/pmd" />
+
+    <property name="main-class"  value="oata.HelloWorld"/>
+
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="${jar.dir}/${ant.project.name}.jar" fork="true"/>
+    </target>
+
+
+   <target name="checkstyle" depends="init-checkstyle">
+      <mkdir dir="${report.checkstyle.dir}"/>
+      <checkstyle config="${checkstyle.home.dir}/sun_checks.xml"
+              failureProperty="checkstyle.failure"
+              failOnViolation="false">
+              <formatter type="xml" tofile="${report.checkstyle.dir}/checkstyle_report.xml"/>
+              <fileset dir="${src.dir}" includes="**/*.java"/>
+      </checkstyle>
+   </target>
+
+   <target name="init-checkstyle">
+	<path id="checkstyle.lib.path">
+            <fileset dir="${checkstyle.home.dir}" includes="*.jar"/>
+	</path>
+	<taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties" classpathref="checkstyle.lib.path"/>
+   </target>
+
+
+<!-- -->
+    <path id="pmd2.classpath">
+        <fileset dir="${pmd.home.dir}/lib/">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask"  classpathref="pmd2.classpath" />
+
+    <target name="pmd">
+        <mkdir dir="${report.pmd.dir}" />
+        <pmd rulesetfiles="${pmd.home.dir}/pmdRules.xml">
+            <formatter type="xml" toFile="${report.pmd.dir}/pmd_report.xml" />
+            <fileset dir="${src.dir}">
+                <include name="**/*.java" />
+            </fileset>
+        </pmd>
+    </target>
+
+
+
+    <target name="clean-build" depends="clean,jar"/>
+
+    <target name="main" depends="clean,run"/>
+
+</project>
+
